@@ -1,5 +1,6 @@
 const Group = require("../models/Groups");
 const Category = require("../models/Category");
+const Groups = require("../models/Groups");
 
 const CreateGroup = async (req, res) => {
   try {
@@ -40,4 +41,51 @@ const CreateGroup = async (req, res) => {
   }
 };
 
-module.exports = { CreateGroup };
+
+
+
+const joinGroup = async (req, res) => {
+  try {
+      const { groupId } = req.body; // Get groupId from body
+      const userId = req.user.id; // User ID from token
+
+      if (!groupId) {
+          return res.status(400).json({
+              success: false,
+              message: "Group ID is required",
+          });
+      }
+
+      const group = await Group.findById(groupId);
+      if (!group) {
+          return res.status(404).json({
+              success: false,
+              message: "Group not found",
+          });
+      }
+
+      if (group.members.includes(userId)) {
+          return res.status(400).json({
+              success: false,
+              message: "User is already a member of the group",
+          });
+      }
+
+      group.members.push(userId);
+      await group.save();
+
+      res.status(200).json({
+          success: true,
+          message: "Successfully joined the group",
+          group,
+      });
+  } catch (error) {
+      return res.status(500).json({
+          success: false,
+          message: "Error joining group",
+          error: error.message,
+      });
+  }
+};
+
+module.exports = { CreateGroup, joinGroup };
